@@ -1,0 +1,118 @@
+module main (
+    input clk,
+    input reset,
+    input init,
+    input [255:0] hash,
+    output reg [31:0] password_count,
+    output reg cracked,
+    output reg done
+);
+
+reg rst;
+reg [31:0] count;
+reg [31:0] state;
+reg [7:0] byte_addressable_memory [0:36000];
+reg [31:0] memory_address;
+reg [31:0] start_string;
+reg [7:0] data_in;
+reg [31:0] curr_index;
+reg byte_rdy;
+reg byte_stop;
+reg [31:0] indices [0:1024];
+reg [31:0] lengths [0:1024];
+reg init_received;
+wire [255:0] Hash_digest;
+wire overflow_err;
+wire hashing_done;
+
+top_sha sha256cu(clk,rst,byte_rdy,byte_stop,data_in[7:0],
+					overflow_err,Hash_digest, hashing_done);
+always @(posedge clk) begin
+    if (reset) begin
+        count <= 0;
+        state <= 0;
+        rst<=0;
+        memory_address <=0;
+        start_string <=0;
+        curr_index<=0;
+        password_count<=0;
+        cracked <=0;
+        done <=0;
+        init_received <= 0;
+        byte_rdy <= 0;
+        byte_stop <= 0;
+    end else begin
+        // Detect init signal
+        if (init && !init_received) begin
+            init_received <= 1;
+        end
+        
+        case (state)
+            0: begin // init state - wait for init signal, then parse dictionary
+                if (init_received) begin
+                    if (byte_addressable_memory[memory_address] == 8'ha) begin
+                            indices[count] <= start_string;
+                            start_string <= memory_address + 1;
+                            memory_address <= memory_address+1;
+                            lengths[count] <= memory_address - start_string;
+                            count <= count + 1;
+                    end else if (byte_addressable_memory[memory_address] == 8'h5) begin
+                            password_count<=count;
+                            count <=0;
+                            state <= 1;
+                            rst <= 1;
+                            byte_rdy <=1;
+                            byte_stop <=0;
+                    end else begin
+                            memory_address <= memory_address +1;
+                    end
+                end
+            end
+            1: begin // ready 
+                if(count<password_count)begin
+                    if(lengths[count]>curr_index) begin
+                        data_in <= byte_addressable_memory[indices[count]+curr_index];
+                        curr_index <= curr_index +1;
+                    end else begin
+                        byte_rdy <=0;
+                        byte_stop <=1;
+                        state <=2;
+                    end
+                end else begin
+                state <=3;
+                end               
+            end
+          2: begin // Wait for hashing to complete
+             if(hashing_done==1'b1)begin
+                if(Hash_digest==hash)begin
+                    cracked<=1;
+                    done<=1;
+                    state<=3;
+                end else begin
+                    // Move to next password
+                    count<=count+1;
+                    curr_index <=0;
+                    state <=4;
+                end
+             end
+          end
+         3: begin // Done state
+         done <=1;
+         end
+         4: begin // Reset SHA256 for next password
+            rst <= 0;
+            byte_rdy <= 0;
+            byte_stop <= 0;
+            state <= 5;
+         end
+         5: begin // Re-enable SHA256 and start next password
+            rst <= 1;
+            byte_rdy <= 1;
+            byte_stop <= 0;
+            state <= 1;
+         end
+        endcase
+    end
+end
+
+endmodule
