@@ -27,6 +27,49 @@ wire hashing_done;
 
 top_sha sha256cu(clk,rst,byte_rdy,byte_stop,data_in[7:0],
 					overflow_err,Hash_digest, hashing_done);
+
+// Hardware dictionary preload (used on FPGA; testbench writes do not exist in silicon).
+// Format: ASCII bytes, each word ends with 0x0A, dictionary ends with 0x05.
+initial begin
+    // abc
+    byte_addressable_memory[0]  = 8'h61;
+    byte_addressable_memory[1]  = 8'h62;
+    byte_addressable_memory[2]  = 8'h63;
+    byte_addressable_memory[3]  = 8'h0a;
+
+    // soham
+    byte_addressable_memory[4]  = 8'h73;
+    byte_addressable_memory[5]  = 8'h6f;
+    byte_addressable_memory[6]  = 8'h68;
+    byte_addressable_memory[7]  = 8'h61;
+    byte_addressable_memory[8]  = 8'h6d;
+    byte_addressable_memory[9]  = 8'h0a;
+
+    // ab
+    byte_addressable_memory[10] = 8'h61;
+    byte_addressable_memory[11] = 8'h62;
+    byte_addressable_memory[12] = 8'h0a;
+
+    // hello
+    byte_addressable_memory[13] = 8'h68;
+    byte_addressable_memory[14] = 8'h65;
+    byte_addressable_memory[15] = 8'h6c;
+    byte_addressable_memory[16] = 8'h6c;
+    byte_addressable_memory[17] = 8'h6f;
+    byte_addressable_memory[18] = 8'h0a;
+
+    // iiitv
+    byte_addressable_memory[19] = 8'h69;
+    byte_addressable_memory[20] = 8'h69;
+    byte_addressable_memory[21] = 8'h69;
+    byte_addressable_memory[22] = 8'h74;
+    byte_addressable_memory[23] = 8'h76;
+    byte_addressable_memory[24] = 8'h0a;
+
+    // End marker
+    byte_addressable_memory[25] = 8'h05;
+end
+
 always @(posedge clk) begin
     if (reset) begin
         count <= 0;

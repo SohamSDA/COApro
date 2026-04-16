@@ -29,7 +29,7 @@ wire done;
 reg [255:0] hash;
 // Change this one value before simulation/demo:
 // 0=abc, 1=soham, 2=ab, 3=hello, 4=iiitv
-localparam integer TARGET_SELECT = 1;
+localparam integer TARGET_SELECT = 3;
 // Instantiate DUT
 main dut(
     .clk(clk),
