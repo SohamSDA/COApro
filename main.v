@@ -78,6 +78,7 @@ always @(posedge clk) begin
         memory_address <=0;
         start_string <=0;
         curr_index<=0;
+        data_in <= 8'd0;
         password_count<=0;
         cracked <=0;
         done <=0;
@@ -118,13 +119,17 @@ always @(posedge clk) begin
                         curr_index <= curr_index +1;
                     end else begin
                         byte_rdy <=0;
-                        byte_stop <=1;
-                        state <=2;
+                        byte_stop <=0;
+                        state <=6;
                     end
                 end else begin
                 state <=3;
                 end               
             end
+          6: begin // pulse byte_stop after byte_rdy has gone low
+             byte_stop <= 1;
+             state <=2;
+          end
           2: begin // Wait for hashing to complete
              if(hashing_done==1'b1)begin
                 if(Hash_digest==hash)begin

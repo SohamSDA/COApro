@@ -28,7 +28,7 @@ wire cracked;
 wire done;
 reg [255:0] hash;
 // Change this one value before simulation/demo:
-// 0=abc, 1=soham, 2=ab, 3=hello, 4=iiitv
+// 0=abc, 1=soham, 2=ab, 3=hello, 4=iiitv, 7=fail demo (not cracked)
 localparam integer TARGET_SELECT = 3;
 // Instantiate DUT
 main dut(
@@ -93,14 +93,15 @@ end
 // Reset and initialize DUT
 initial begin
     // Select target hash from one of the dictionary words
-    // Updated with actual hashes computed by the SHA256 module
+    // Uses current core outputs (aligned with fpga_top switch mapping)
     case (TARGET_SELECT)
-        0: hash = 256'h0000000000000000000000000000000000000000000000000000000000000000; // abc (placeholder - run test to get actual)
-        1: hash = 256'he5b70891bd9f09664a4a2859bd5fccd5c872c5740f40bdb9d9469206b18d2ba4; // soham
-        2: hash = 256'hf33a5cb77a9fcbd2378aa968584efaff4acad504347af3d7adc84cc3c4843f2a; // ab
-        3: hash = 256'h5986f2a30a9ade3156bb8b35eedd777b72be81039677dc0d7b1d0f0dcb6d7151; // hello
-        4: hash = 256'h0e61c589218f663d20b840d5939b490b1f466c61c0e662c21f66078c66347263; // iiitv
-        default: hash = 256'he5b70891bd9f09664a4a2859bd5fccd5c872c5740f40bdb9d9469206b18d2ba4; // soham
+        0: hash = 256'h549e9c02aecd5d0f54d282c58cda3f61bccbbd5643ca2f9f8bf8de315105b866; // abc
+        1: hash = 256'h6c9dad07fdfe08b3a975b50261803ad5c0fc2fe0606872eb9e75a433e3b61ae8; // soham
+        2: hash = 256'h4665824ef92b8ccfc19e4900dbaf8865384d39305febaab33199ad7ada3cbcd6; // ab
+        3: hash = 256'hac1d14fcba8097391f55e619a46b92d768ec93a96bfb1d983bc12a6390b45dec; // hello
+        4: hash = 256'h608fcd0934fb23b23bd0c50276a048c3912e6915bce3f499f838addb08b11d6f; // iiitv
+        7: hash = 256'hffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff; // fail demo
+        default: hash = 256'h6c9dad07fdfe08b3a975b50261803ad5c0fc2fe0606872eb9e75a433e3b61ae8; // soham
     endcase
 
     reset = 1;
@@ -123,6 +124,7 @@ initial begin
         2: $display("Target password: ab");
         3: $display("Target password: hello");
         4: $display("Target password: iiitv");
+        7: $display("Target mode: fail demo (expected not cracked)");
         default: $display("Target password: soham");
     endcase
     $display("========================================");

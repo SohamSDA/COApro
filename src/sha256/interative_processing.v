@@ -37,6 +37,7 @@ module interative_processing(clk,rst,w,k,counter_iteration,padding_done,a_out,b_
 	 if(rst==0)
 	 begin
 			temp_case=1'b0;
+			temp_if=1'b0;
 			a_out=32'h6a09e667;
 			b_out=32'hbb67ae85;
 			c_out=32'h3c6ef372;
